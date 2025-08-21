@@ -1,8 +1,6 @@
-// Xây dựng trang thống kê và xuất báo cáo
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'; // <-- SỬA LỖI: Đã import ở đây
 import { Card, Row, Col, Select, Button, message, Statistic, Typography, Space } from 'antd';
+import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
 import apiClient from '../api/axiosConfig';
 import useAuth from '../hooks/useAuth';
 
@@ -155,7 +153,7 @@ const StatisticsPage = () => {
         <Button type="primary" icon={<FileExcelOutlined />} onClick={() => handleExport('excel')}>
           Xuất file Excel
         </Button>
-        <Button type="default" danger icon={<FilePdfOutlined />} onClick={() => handleExport('pdf')}>
+        <Button icon={<FilePdfOutlined />} onClick={() => handleExport('pdf')}>
           Xuất file PDF
         </Button>
       </Space>
