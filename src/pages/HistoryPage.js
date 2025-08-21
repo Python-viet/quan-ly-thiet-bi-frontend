@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, message, Popconfirm, Modal, Form, Input, DatePicker, InputNumber, Select, Checkbox, Card, Typography } from 'antd';
+import { Table, Button, Space, message, Popconfirm, Modal, Form, Input, DatePicker, InputNumber, Select, Checkbox, Card, Typography, Row, Col } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import apiClient from '../api/axiosConfig';
 import useAuth from '../hooks/useAuth'; // Import hook để lấy thông tin người dùng
@@ -63,23 +63,54 @@ const HistoryPage = () => {
 
   const handleTeacherFilterChange = (teacherId) => {
     setSelectedTeacherId(teacherId);
-    // Khi đổi bộ lọc, không cần tìm kiếm lại ngay, useEffect sẽ xử lý
+    // Khi đổi bộ lọc, useEffect sẽ tự động tải lại dữ liệu
   };
 
-  const handleDelete = async (id) => { /* ... code không đổi ... */ };
-  const handleEdit = (record) => { /* ... code không đổi ... */ };
-  const handleModalOk = async () => { /* ... code không đổi ... */ };
+  const handleDelete = async (id) => {
+    try {
+        await apiClient.delete(`/forms/${id}`);
+        message.success('Xóa phiếu mượn thành công!');
+        fetchForms('', selectedTeacherId);
+    } catch (error) {
+        message.error('Lỗi khi xóa phiếu mượn.');
+    }
+  };
 
-  // SỬA LỖI: Thêm cột "Tên Giáo Viên"
+  const handleEdit = (record) => {
+    setEditingForm(record);
+    form.setFieldsValue({
+        ...record,
+        borrow_date: dayjs(record.borrow_date),
+        return_date: dayjs(record.return_date),
+    });
+    setIsModalVisible(true);
+  };
+
+  const handleModalOk = async () => {
+    try {
+        const values = await form.validateFields();
+        const formattedValues = {
+            ...values,
+            borrow_date: values.borrow_date.format('YYYY-MM-DD'),
+            return_date: values.return_date.format('YYYY-MM-DD'),
+            uses_it: values.uses_it || false,
+            school_year: editingForm.school_year
+        };
+        await apiClient.put(`/forms/${editingForm.id}`, formattedValues);
+        message.success('Cập nhật phiếu mượn thành công!');
+        setIsModalVisible(false);
+        setEditingForm(null);
+        fetchForms('', selectedTeacherId);
+    } catch (error) {
+        message.error('Lỗi khi cập nhật phiếu mượn.');
+    }
+  };
+
   const columns = [
-    // Hiển thị cột này nếu là admin, manager hoặc leader
     (user?.role !== 'teacher' && { 
         title: 'Tên Giáo Viên', 
         dataIndex: 'full_name', 
         key: 'full_name',
-        // Lọc theo tên giáo viên
-        filters: departmentUsers.map(u => ({ text: u.full_name, value: u.id })),
-        onFilter: (value, record) => record.user_id === value,
     }),
     { title: 'Tuần', dataIndex: 'week', key: 'week' },
     { title: 'Ngày Mượn', dataIndex: 'borrow_date', key: 'borrow_date', render: (text) => dayjs(text).format('DD/MM/YYYY') },
@@ -90,6 +121,8 @@ const HistoryPage = () => {
     {
       title: 'Hành động',
       key: 'action',
+      fixed: 'right', // Giữ cột hành động cố định khi cuộn ngang
+      width: 150,
       render: (_, record) => (
         <Space size="middle">
           <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Sửa</Button>
@@ -104,35 +137,46 @@ const HistoryPage = () => {
         </Space>
       ),
     },
-  ].filter(Boolean); // Lọc ra các giá trị false (cột Tên Giáo Viên khi là teacher)
+  ].filter(Boolean);
 
   return (
     <Card>
       <Title level={3}>Lịch sử mượn trả thiết bị</Title>
-      <Space wrap style={{ marginBottom: 16 }}>
-        <Input.Search
-          placeholder="Tìm theo tên thiết bị hoặc bài dạy..."
-          onSearch={handleSearch}
-          style={{ width: 300 }}
-          allowClear
-          enterButton
-        />
-        {/* SỬA LỖI: Hiển thị bộ lọc cho leader */}
-        {user?.role === 'leader' && (
-          <Select
-            placeholder="Lọc theo giáo viên"
-            style={{ width: 200 }}
-            onChange={handleTeacherFilterChange}
+      {/* SỬA LỖI: Sử dụng Row và Col để làm responsive */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col xs={24} md={12} lg={8}>
+          <Input.Search
+            placeholder="Tìm theo tên thiết bị hoặc bài dạy..."
+            onSearch={handleSearch}
+            style={{ width: '100%' }}
             allowClear
-          >
-            {departmentUsers.map(u => (
-              <Option key={u.id} value={u.id}>{u.full_name}</Option>
-            ))}
-          </Select>
+            enterButton
+          />
+        </Col>
+        {user?.role === 'leader' && (
+          <Col xs={24} md={12} lg={8}>
+            <Select
+              placeholder="Lọc theo giáo viên"
+              style={{ width: '100%' }}
+              onChange={handleTeacherFilterChange}
+              allowClear
+            >
+              {departmentUsers.map(u => (
+                <Option key={u.id} value={u.id}>{u.full_name}</Option>
+              ))}
+            </Select>
+          </Col>
         )}
-      </Space>
+      </Row>
 
-      <Table columns={columns} dataSource={forms} loading={loading} rowKey="id" bordered />
+      <Table 
+        columns={columns} 
+        dataSource={forms} 
+        loading={loading} 
+        rowKey="id" 
+        bordered 
+        scroll={{ x: 'max-content' }} // Cho phép cuộn ngang trên màn hình nhỏ
+      />
 
       <Modal
         title="Chỉnh sửa Phiếu Mượn"
@@ -141,7 +185,15 @@ const HistoryPage = () => {
         onCancel={() => setIsModalVisible(false)}
         width={800}
       >
-        {/* ... Form chỉnh sửa không đổi ... */}
+        {/* Form chỉnh sửa cũng cần được làm responsive */}
+        <Form form={form} layout="vertical">
+           <Row gutter={16}>
+                <Col xs={24} md={8}><Form.Item label="Tuần (1-35)" name="week" rules={[{ required: true }]}><InputNumber min={1} max={35} style={{ width: '100%' }} /></Form.Item></Col>
+                <Col xs={24} md={8}><Form.Item label="Ngày mượn" name="borrow_date" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item></Col>
+                <Col xs={24} md={8}><Form.Item label="Ngày trả" name="return_date" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item></Col>
+           </Row>
+           {/* ... Các trường Form.Item khác cũng nên được đặt trong Row/Col tương tự ... */}
+        </Form>
       </Modal>
     </Card>
   );
