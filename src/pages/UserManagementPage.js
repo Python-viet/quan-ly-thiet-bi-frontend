@@ -92,17 +92,27 @@ const UserManagementPage = () => {
                         onConfirm={() => handleDeleteUser(record.id)}
                         okText="Có"
                         cancelText="Không"
+                        disabled={record.username === 'superadmin' || record.username === 'admin'}
                     >
-                        <Button icon={<DeleteOutlined />} danger>Xóa</Button>
+                        <Button 
+                            icon={<DeleteOutlined />} 
+                            danger 
+                            disabled={record.username === 'superadmin' || record.username === 'admin'}
+                        >
+                            Xóa
+                        </Button>
                     </Popconfirm>
                 </Space>
             ),
         },
     ];
 
+    // SỬA LỖI: Lấy URL backend một cách động
+    const uploadUrl = `${apiClient.defaults.baseURL}/admin/users/bulk-upload`;
+
     const uploadProps = {
         name: 'file',
-        action: 'http://localhost:3001/api/admin/users/bulk-upload',
+        action: uploadUrl, // Sử dụng URL đã được cấu hình
         headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
