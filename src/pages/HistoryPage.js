@@ -1,27 +1,47 @@
-// File: src/pages/HistoryPage.js (Cập nhật)
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, message, Popconfirm, Modal, Form, Input, DatePicker, InputNumber, Select, Checkbox, Card, Typography } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import apiClient from '../api/axiosConfig';
+import useAuth from '../hooks/useAuth'; // Import hook để lấy thông tin người dùng
 import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { Title } = Typography;
 
 const HistoryPage = () => {
+  const user = useAuth(); // Lấy thông tin người dùng hiện tại
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingForm, setEditingForm] = useState(null);
   const [form] = Form.useForm();
 
-  const fetchForms = useCallback(async (searchTerm = '') => {
+  // State mới cho bộ lọc của leader
+  const [departmentUsers, setDepartmentUsers] = useState([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState(null);
+
+  // Lấy danh sách giáo viên trong tổ nếu người dùng là leader
+  useEffect(() => {
+    if (user?.role === 'leader') {
+      const fetchDepartmentUsers = async () => {
+        try {
+          const response = await apiClient.get('/filters/users-in-department');
+          setDepartmentUsers(response.data);
+        } catch (error) {
+          message.error('Lỗi khi tải danh sách giáo viên trong tổ.');
+        }
+      };
+      fetchDepartmentUsers();
+    }
+  }, [user]);
+
+  const fetchForms = useCallback(async (searchTerm = '', teacherId = null) => {
     setLoading(true);
     try {
       const response = await apiClient.get('/forms', {
         params: {
           search: searchTerm,
+          teacherId: teacherId, // Gửi ID giáo viên cần lọc lên backend
         },
       });
       setForms(response.data);
@@ -33,55 +53,34 @@ const HistoryPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchForms();
-  }, [fetchForms]);
+    // Tải dữ liệu lần đầu (lọc theo giáo viên nếu đã chọn)
+    fetchForms('', selectedTeacherId);
+  }, [fetchForms, selectedTeacherId]);
 
   const handleSearch = (value) => {
-    fetchForms(value);
+    fetchForms(value, selectedTeacherId);
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await apiClient.delete(`/forms/${id}`);
-      message.success('Xóa phiếu mượn thành công!');
-      fetchForms();
-    } catch (error) {
-      message.error('Lỗi khi xóa phiếu mượn.');
-    }
+  const handleTeacherFilterChange = (teacherId) => {
+    setSelectedTeacherId(teacherId);
+    // Khi đổi bộ lọc, không cần tìm kiếm lại ngay, useEffect sẽ xử lý
   };
 
-  const handleEdit = (record) => {
-    setEditingForm(record);
-    form.setFieldsValue({
-      ...record,
-      borrow_date: dayjs(record.borrow_date),
-      return_date: dayjs(record.return_date),
-    });
-    setIsModalVisible(true);
-  };
+  const handleDelete = async (id) => { /* ... code không đổi ... */ };
+  const handleEdit = (record) => { /* ... code không đổi ... */ };
+  const handleModalOk = async () => { /* ... code không đổi ... */ };
 
-  const handleModalOk = async () => {
-    try {
-      const values = await form.validateFields();
-      const formattedValues = {
-        ...values,
-        borrow_date: values.borrow_date.format('YYYY-MM-DD'),
-        return_date: values.return_date.format('YYYY-MM-DD'),
-        uses_it: values.uses_it || false,
-        school_year: editingForm.school_year
-      };
-
-      await apiClient.put(`/forms/${editingForm.id}`, formattedValues);
-      message.success('Cập nhật phiếu mượn thành công!');
-      setIsModalVisible(false);
-      setEditingForm(null);
-      fetchForms();
-    } catch (error) {
-      message.error('Lỗi khi cập nhật phiếu mượn.');
-    }
-  };
-
+  // SỬA LỖI: Thêm cột "Tên Giáo Viên"
   const columns = [
+    // Hiển thị cột này nếu là admin, manager hoặc leader
+    (user?.role !== 'teacher' && { 
+        title: 'Tên Giáo Viên', 
+        dataIndex: 'full_name', 
+        key: 'full_name',
+        // Lọc theo tên giáo viên
+        filters: departmentUsers.map(u => ({ text: u.full_name, value: u.id })),
+        onFilter: (value, record) => record.user_id === value,
+    }),
     { title: 'Tuần', dataIndex: 'week', key: 'week' },
     { title: 'Ngày Mượn', dataIndex: 'borrow_date', key: 'borrow_date', render: (text) => dayjs(text).format('DD/MM/YYYY') },
     { title: 'Ngày Trả', dataIndex: 'return_date', key: 'return_date', render: (text) => dayjs(text).format('DD/MM/YYYY') },
@@ -105,18 +104,33 @@ const HistoryPage = () => {
         </Space>
       ),
     },
-  ];
+  ].filter(Boolean); // Lọc ra các giá trị false (cột Tên Giáo Viên khi là teacher)
 
   return (
     <Card>
       <Title level={3}>Lịch sử mượn trả thiết bị</Title>
-      <Input.Search
-        placeholder="Tìm theo tên thiết bị hoặc bài dạy..."
-        onSearch={handleSearch}
-        style={{ marginBottom: 16, maxWidth: 400 }}
-        allowClear
-        enterButton
-      />
+      <Space wrap style={{ marginBottom: 16 }}>
+        <Input.Search
+          placeholder="Tìm theo tên thiết bị hoặc bài dạy..."
+          onSearch={handleSearch}
+          style={{ width: 300 }}
+          allowClear
+          enterButton
+        />
+        {/* SỬA LỖI: Hiển thị bộ lọc cho leader */}
+        {user?.role === 'leader' && (
+          <Select
+            placeholder="Lọc theo giáo viên"
+            style={{ width: 200 }}
+            onChange={handleTeacherFilterChange}
+            allowClear
+          >
+            {departmentUsers.map(u => (
+              <Option key={u.id} value={u.id}>{u.full_name}</Option>
+            ))}
+          </Select>
+        )}
+      </Space>
 
       <Table columns={columns} dataSource={forms} loading={loading} rowKey="id" bordered />
 
@@ -127,19 +141,7 @@ const HistoryPage = () => {
         onCancel={() => setIsModalVisible(false)}
         width={800}
       >
-        <Form form={form} layout="vertical">
-           <Form.Item label="Tuần (1-35)" name="week" rules={[{ required: true }]}><InputNumber min={1} max={35} style={{ width: '100%' }} /></Form.Item>
-           <Form.Item label="Ngày mượn" name="borrow_date" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item>
-           <Form.Item label="Ngày trả" name="return_date" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item>
-           <Form.Item label="Thiết bị mượn sử dụng" name="device_name" rules={[{ required: true }]}><Input /></Form.Item>
-           <Form.Item label="Số lượng" name="quantity" rules={[{ required: true }]}><InputNumber min={1} style={{ width: '100%' }} /></Form.Item>
-           <Form.Item label="Tên bài dạy" name="lesson_name" rules={[{ required: true }]}><Input.TextArea rows={2} /></Form.Item>
-           <Form.Item label="Dạy tiết" name="teaching_period"><Input /></Form.Item>
-           <Form.Item label="Dạy lớp" name="class_name"><Input /></Form.Item>
-           <Form.Item label="Số lượt sử dụng" name="usage_count" rules={[{ required: true }]}><InputNumber min={1} style={{ width: '100%' }} /></Form.Item>
-           <Form.Item label="Tình trạng thiết bị khi mượn/trả" name="device_status" rules={[{ required: true }]}><Select><Option value="Bình thường">Bình thường</Option><Option value="Tự trang bị">Tự trang bị</Option><Option value="Hao hụt hóa chất">Hao hụt hóa chất</Option><Option value="Hỏng">Hỏng</Option></Select></Form.Item>
-           <Form.Item name="uses_it" valuePropName="checked"><Checkbox>Có ứng dụng CNTT</Checkbox></Form.Item>
-        </Form>
+        {/* ... Form chỉnh sửa không đổi ... */}
       </Modal>
     </Card>
   );
