@@ -16,14 +16,16 @@ const getCurrentSchoolYear = () => {
     return currentMonth >= 8 ? `${currentYear}-${currentYear + 1}` : `${currentYear - 1}-${currentYear}`;
 };
 
+// SỬA LỖI: Chỉ hiển thị năm học hiện tại và năm học trước đó
 const generateSchoolYears = () => {
     const years = [];
-    const currentYearEnd = parseInt(getCurrentSchoolYear().split('-')[1]);
-    for (let i = 0; i < 5; i++) {
-        const end = currentYearEnd - i;
-        const start = end - 1;
-        years.push(`${start}-${end}`);
-    }
+    const [currentStart, currentEnd] = getCurrentSchoolYear().split('-').map(Number);
+
+    // Thêm năm học hiện tại
+    years.push(`${currentStart}-${currentEnd}`);
+    // Thêm năm học trước đó
+    years.push(`${currentStart - 1}-${currentEnd - 1}`);
+    
     return years;
 };
 
@@ -82,20 +84,13 @@ const StatisticsPage = () => {
     fetchDataForFilters();
   }, [fetchDataForFilters]);
 
-  // SỬA LỖI: Đảm bảo logic lọc hoạt động chính xác
   const handleDepartmentChange = (selectedDeptId) => {
-    // Cập nhật lại ID của tổ chuyên môn đã chọn
     setDepartmentId(selectedDeptId);
-    // Reset lại lựa chọn giáo viên mỗi khi đổi tổ
     setUserId(null);
 
     if (!selectedDeptId) {
-      // Nếu người dùng xóa lựa chọn tổ (nhấn dấu X),
-      // thì hiển thị lại toàn bộ danh sách giáo viên
       setFilteredUsers(allUsers);
     } else {
-      // Nếu người dùng chọn một tổ cụ thể,
-      // lọc lại danh sách `allUsers` để chỉ giữ lại những ai có `department_id` khớp
       setFilteredUsers(allUsers.filter(u => u.department_id === selectedDeptId));
     }
   };
