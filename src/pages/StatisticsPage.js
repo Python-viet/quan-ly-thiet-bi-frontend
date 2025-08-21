@@ -135,27 +135,28 @@ const StatisticsPage = () => {
   return (
     <Card>
       <Title level={3}>Thống kê và Báo cáo</Title>
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }} align="bottom">
-        <Col>
-            <Select value={schoolYear} onChange={setSchoolYear} style={{ width: 150 }}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        {/* SỬA LỖI: Thêm thuộc tính responsive cho Col */}
+        <Col xs={24} sm={12} md={8} lg={6}>
+            <Select value={schoolYear} onChange={setSchoolYear} style={{ width: '100%' }}>
                 {generateSchoolYears().map(year => <Option key={year} value={year}>Năm học {year}</Option>)}
             </Select>
         </Col>
-        <Col>
-            <Select value={month} onChange={setMonth} style={{ width: 120 }}>
+        <Col xs={24} sm={12} md={8} lg={6}>
+            <Select value={month} onChange={setMonth} style={{ width: '100%' }}>
                 {schoolMonths.map(m => <Option key={m.value} value={m.value}>{m.label}</Option>)}
             </Select>
         </Col>
         
         {(user?.role === 'admin' || user?.role === 'manager') && (
           <>
-            <Col>
-              <Select placeholder="Chọn tổ chuyên môn" onChange={handleDepartmentChange} style={{ width: 200 }} allowClear>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <Select placeholder="Chọn tổ chuyên môn" onChange={handleDepartmentChange} style={{ width: '100%' }} allowClear>
                 {departments.map(d => <Option key={d.id} value={d.id}>{d.name}</Option>)}
               </Select>
             </Col>
-            <Col>
-              <Select placeholder="Chọn giáo viên" value={userId} onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <Select placeholder="Chọn giáo viên" value={userId} onChange={setUserId} style={{ width: '100%' }} allowClear loading={loadingUsers}>
                 {filteredUsers.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
               </Select>
             </Col>
@@ -163,26 +164,36 @@ const StatisticsPage = () => {
         )}
 
         {user?.role === 'leader' && (
-            <Col>
-              <Select placeholder="Chọn giáo viên trong tổ" onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
+            <Col xs={24} sm={24} md={8} lg={6}>
+              <Select placeholder="Chọn giáo viên trong tổ" onChange={setUserId} style={{ width: '100%' }} allowClear loading={loadingUsers}>
                 {filteredUsers.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
               </Select>
             </Col>
         )}
 
-        <Col><Button type="primary" onClick={() => handleAction('fetch')} loading={loading}>Xem thống kê</Button></Col>
+        <Col xs={24} sm={24} md={8} lg={6}>
+            <Button type="primary" onClick={() => handleAction('fetch')} loading={loading} style={{ width: '100%' }}>
+                Xem thống kê
+            </Button>
+        </Col>
       </Row>
 
       {stats && (
-        <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col span={8}><Statistic title="Tổng số phiếu mượn" value={stats.total_forms} /></Col>
-          <Col span={8}><Statistic title="Tổng lượt sử dụng" value={stats.total_usage} /></Col>
-          <Col span={8}><Statistic title="Tổng lượt ứng dụng CNTT" value={stats.total_it_usage} /></Col>
+        <Row gutter={[16, 24]}>
+          <Col xs={24} md={8}>
+            <Statistic title="Tổng số phiếu mượn" value={stats.total_forms} />
+          </Col>
+          <Col xs={24} md={8}>
+            <Statistic title="Tổng lượt sử dụng" value={stats.total_usage} />
+          </Col>
+          <Col xs={24} md={8}>
+            <Statistic title="Tổng lượt ứng dụng CNTT" value={stats.total_it_usage} />
+          </Col>
         </Row>
       )}
 
-      <Title level={4}>Xuất báo cáo</Title>
-      <Space>
+      <Title level={4} style={{marginTop: 24}}>Xuất báo cáo</Title>
+      <Space wrap>
         <Button type="primary" icon={<FileExcelOutlined />} onClick={() => handleAction('excel')}>
           Xuất file Excel
         </Button>
