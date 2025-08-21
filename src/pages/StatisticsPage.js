@@ -7,35 +7,69 @@ import useAuth from '../hooks/useAuth';
 const { Title } = Typography;
 const { Option } = Select;
 
+// --- HELPER FUNCTIONS CHO NĂM HỌC ---
+
+const getCurrentSchoolYear = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    return currentMonth >= 8 ? `${currentYear}-${currentYear + 1}` : `${currentYear - 1}-${currentYear}`;
+};
+
+const generateSchoolYears = () => {
+    const years = [];
+    const currentYearEnd = parseInt(getCurrentSchoolYear().split('-')[1]);
+    for (let i = 0; i < 5; i++) {
+        const end = currentYearEnd - i;
+        const start = end - 1;
+        years.push(`${start}-${end}`);
+    }
+    return years;
+};
+
+const schoolMonths = [
+    { value: 9, label: 'Tháng 9' }, { value: 10, label: 'Tháng 10' },
+    { value: 11, label: 'Tháng 11' }, { value: 12, label: 'Tháng 12' },
+    { value: 1, label: 'Tháng 1' }, { value: 2, label: 'Tháng 2' },
+    { value: 3, label: 'Tháng 3' }, { value: 4, label: 'Tháng 4' },
+    { value: 5, label: 'Tháng 5' }
+];
+
+
 const StatisticsPage = () => {
   const user = useAuth();
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [schoolYear, setSchoolYear] = useState(getCurrentSchoolYear());
+  const [month, setMonth] = useState(9);
+  
   const [departmentId, setDepartmentId] = useState(user?.role === 'leader' ? user.departmentId : null);
   const [userId, setUserId] = useState(null);
 
   const [departments, setDepartments] = useState([]);
-  const [users, setUsers] = useState([]); // Chỉ lưu danh sách user đã được lọc
+  const [allUsers, setAllUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   const fetchDataForFilters = useCallback(async () => {
-    // Admin và manager lấy danh sách tổ
     if (user?.role === 'admin' || user?.role === 'manager') {
       try {
-        const deptsRes = await apiClient.get('/admin/departments');
+        const [usersRes, deptsRes] = await Promise.all([
+            apiClient.get('/admin/users'),
+            apiClient.get('/admin/departments')
+        ]);
+        const relevantUsers = usersRes.data.filter(u => u.role === 'teacher' || u.role === 'leader');
+        setAllUsers(relevantUsers);
+        setFilteredUsers(relevantUsers);
         setDepartments(deptsRes.data);
       } catch (error) {
-        message.error('Lỗi khi tải danh sách tổ chuyên môn.');
+        message.error('Lỗi khi tải dữ liệu cho bộ lọc.');
       }
-    } 
-    // Leader lấy danh sách giáo viên trong tổ
-    else if (user?.role === 'leader') {
+    } else if (user?.role === 'leader') {
       try {
         setLoadingUsers(true);
         const response = await apiClient.get('/filters/users-in-department');
-        setUsers(response.data);
+        setFilteredUsers(response.data);
       } catch (error) {
         message.error('Lỗi khi tải danh sách giáo viên trong tổ.');
       } finally {
@@ -48,71 +82,75 @@ const StatisticsPage = () => {
     fetchDataForFilters();
   }, [fetchDataForFilters]);
 
-  // SỬA LỖI: Hàm xử lý khi thay đổi tổ chuyên môn
-  const handleDepartmentChange = async (selectedDeptId) => {
+  // SỬA LỖI: Đảm bảo logic lọc hoạt động chính xác
+  const handleDepartmentChange = (selectedDeptId) => {
+    // Cập nhật lại ID của tổ chuyên môn đã chọn
     setDepartmentId(selectedDeptId);
-    setUserId(null); // Reset lựa chọn giáo viên khi đổi tổ
+    // Reset lại lựa chọn giáo viên mỗi khi đổi tổ
+    setUserId(null);
 
     if (!selectedDeptId) {
-      setUsers([]); // Nếu không chọn tổ nào, danh sách giáo viên trống
-      return;
-    }
-
-    try {
-        setLoadingUsers(true);
-        // Gọi API để lấy danh sách user theo tổ đã chọn
-        const response = await apiClient.get(`/filters/users-by-department/${selectedDeptId}`);
-        setUsers(response.data);
-    } catch (error) {
-        message.error('Lỗi khi tải danh sách giáo viên.');
-    } finally {
-        setLoadingUsers(false);
+      // Nếu người dùng xóa lựa chọn tổ (nhấn dấu X),
+      // thì hiển thị lại toàn bộ danh sách giáo viên
+      setFilteredUsers(allUsers);
+    } else {
+      // Nếu người dùng chọn một tổ cụ thể,
+      // lọc lại danh sách `allUsers` để chỉ giữ lại những ai có `department_id` khớp
+      setFilteredUsers(allUsers.filter(u => u.department_id === selectedDeptId));
     }
   };
 
-  const handleFetchStatistics = async () => {
-    setLoading(true);
-    try {
-      const params = { year, month, departmentId, userId };
-      const response = await apiClient.get('/stats', { params });
-      setStats(response.data);
-    } catch (error) {
-      message.error('Lỗi khi tải dữ liệu thống kê.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleExport = (type) => {
-    if (!departmentId) {
-        message.warning('Vui lòng chọn một tổ chuyên môn để xuất báo cáo.');
-        return;
-    }
-    const fetchFile = async () => {
+  const handleAction = async (actionType) => {
+    const [startYear, endYear] = schoolYear.split('-').map(Number);
+    const yearToSend = month >= 9 ? startYear : endYear;
+
+    if (actionType === 'fetch') {
+        setLoading(true);
         try {
-            const response = await apiClient.get(`/export/${type}`, {
-                params: { year, departmentId, userId: userId || '' },
+            const params = { year: yearToSend, month, departmentId, userId };
+            const response = await apiClient.get('/stats', { params });
+            setStats(response.data);
+        } catch (error) {
+            message.error('Lỗi khi tải dữ liệu thống kê.');
+        } finally {
+            setLoading(false);
+        }
+    } else if (actionType === 'excel' || actionType === 'pdf') {
+        if (!departmentId) {
+            message.warning('Vui lòng chọn một tổ chuyên môn để xuất báo cáo.');
+            return;
+        }
+        try {
+            const response = await apiClient.get(`/export/${actionType}`, {
+                params: { year: yearToSend, month, departmentId, userId: userId || '' },
                 responseType: 'blob',
             });
             const blob = new Blob([response.data]);
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
-            link.download = `BaoCao_${type}_${month}-${year}.${type === 'excel' ? 'xlsx' : 'pdf'}`;
+            link.download = `BaoCao_${actionType}_${month}-${yearToSend}.${actionType === 'excel' ? 'xlsx' : 'pdf'}`;
             link.click();
             window.URL.revokeObjectURL(link.href);
         } catch(e) {
             message.error("Xuất file thất bại!");
         }
     }
-    fetchFile();
   };
 
   return (
     <Card>
       <Title level={3}>Thống kê và Báo cáo</Title>
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }} align="bottom">
-        <Col><Select value={year} onChange={setYear} style={{ width: 120 }}>{[...Array(5)].map((_, i) => <Option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</Option>)}</Select></Col>
-        <Col><Select value={month} onChange={setMonth} style={{ width: 120 }}>{[...Array(12)].map((_, i) => <Option key={i+1} value={i+1}>Tháng {i+1}</Option>)}</Select></Col>
+        <Col>
+            <Select value={schoolYear} onChange={setSchoolYear} style={{ width: 150 }}>
+                {generateSchoolYears().map(year => <Option key={year} value={year}>Năm học {year}</Option>)}
+            </Select>
+        </Col>
+        <Col>
+            <Select value={month} onChange={setMonth} style={{ width: 120 }}>
+                {schoolMonths.map(m => <Option key={m.value} value={m.value}>{m.label}</Option>)}
+            </Select>
+        </Col>
         
         {(user?.role === 'admin' || user?.role === 'manager') && (
           <>
@@ -123,7 +161,7 @@ const StatisticsPage = () => {
             </Col>
             <Col>
               <Select placeholder="Chọn giáo viên" value={userId} onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
-                {users.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
+                {filteredUsers.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
               </Select>
             </Col>
           </>
@@ -132,12 +170,12 @@ const StatisticsPage = () => {
         {user?.role === 'leader' && (
             <Col>
               <Select placeholder="Chọn giáo viên trong tổ" onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
-                {users.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
+                {filteredUsers.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
               </Select>
             </Col>
         )}
 
-        <Col><Button type="primary" onClick={handleFetchStatistics} loading={loading}>Xem thống kê</Button></Col>
+        <Col><Button type="primary" onClick={() => handleAction('fetch')} loading={loading}>Xem thống kê</Button></Col>
       </Row>
 
       {stats && (
@@ -150,10 +188,10 @@ const StatisticsPage = () => {
 
       <Title level={4}>Xuất báo cáo</Title>
       <Space>
-        <Button type="primary" icon={<FileExcelOutlined />} onClick={() => handleExport('excel')}>
+        <Button type="primary" icon={<FileExcelOutlined />} onClick={() => handleAction('excel')}>
           Xuất file Excel
         </Button>
-        <Button icon={<FilePdfOutlined />} onClick={() => handleExport('pdf')}>
+        <Button icon={<FilePdfOutlined />} onClick={() => handleAction('pdf')}>
           Xuất file PDF
         </Button>
       </Space>
