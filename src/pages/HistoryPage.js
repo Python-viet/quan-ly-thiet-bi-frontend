@@ -180,60 +180,59 @@ const HistoryPage = () => {
         onCancel={() => setIsModalVisible(false)}
         width={800}
       >
-        {/* SỬA LỖI: Thêm đầy đủ các trường vào form chỉnh sửa */}
         <Form form={form} layout="vertical">
            <Row gutter={16}>
                 <Col xs={24} md={8}>
-                    <Form.Item label="Tuần (1-35)" name="week" rules={[{ required: true }]}>
+                    <Form.Item label="Tuần (1-35)" name="week" rules={[{ required: true, message: 'Vui lòng nhập tuần!' }]}>
                         <InputNumber min={1} max={35} style={{ width: '100%' }} />
                     </Form.Item>
                 </Col>
                 <Col xs={24} md={8}>
-                    <Form.Item label="Ngày mượn" name="borrow_date" rules={[{ required: true }]}>
+                    <Form.Item label="Ngày mượn" name="borrow_date" rules={[{ required: true, message: 'Vui lòng chọn ngày mượn!' }]}>
                         <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
                     </Form.Item>
                 </Col>
                 <Col xs={24} md={8}>
-                    <Form.Item label="Ngày trả" name="return_date" rules={[{ required: true }]}>
+                    <Form.Item label="Ngày trả" name="return_date" rules={[{ required: true, message: 'Vui lòng chọn ngày trả!' }]}>
                         <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
                     </Form.Item>
                 </Col>
            </Row>
            <Row gutter={16}>
                 <Col xs={24} md={16}>
-                    <Form.Item label="Thiết bị mượn sử dụng" name="device_name" rules={[{ required: true }]}>
+                    <Form.Item label="Thiết bị mượn sử dụng" name="device_name" rules={[{ required: true, message: 'Vui lòng nhập tên thiết bị!' }]}>
                         <Input />
                     </Form.Item>
                 </Col>
                 <Col xs={24} md={8}>
-                    <Form.Item label="Số lượng" name="quantity" rules={[{ required: true }]}>
+                    <Form.Item label="Số lượng" name="quantity" rules={[{ required: true, message: 'Vui lòng nhập số lượng!' }]}>
                         <InputNumber min={1} style={{ width: '100%' }} />
                     </Form.Item>
                 </Col>
            </Row>
-           <Form.Item label="Tên bài dạy" name="lesson_name" rules={[{ required: true }]}>
+           <Form.Item label="Tên bài dạy" name="lesson_name" rules={[{ required: true, message: 'Vui lòng nhập tên bài dạy!' }]}>
                 <Input.TextArea rows={2} />
            </Form.Item>
            <Row gutter={16}>
                 <Col xs={24} md={8}>
-                    <Form.Item label="Dạy tiết" name="teaching_period">
+                    <Form.Item label="Dạy tiết" name="teaching_period" rules={[{ required: true, message: 'Vui lòng nhập tiết dạy!' }]}>
                         <Input placeholder="Ví dụ: 1, 2, 4" />
                     </Form.Item>
                 </Col>
                 <Col xs={24} md={8}>
-                    <Form.Item label="Dạy lớp" name="class_name">
+                    <Form.Item label="Dạy lớp" name="class_name" rules={[{ required: true, message: 'Vui lòng nhập lớp dạy!' }]}>
                         <Input placeholder="Ví dụ: 6A3, 9A2" />
                     </Form.Item>
                 </Col>
                 <Col xs={24} md={8}>
-                    <Form.Item label="Số lượt sử dụng" name="usage_count" rules={[{ required: true }]}>
+                    <Form.Item label="Số lượt sử dụng" name="usage_count" rules={[{ required: true, message: 'Vui lòng nhập số lượt sử dụng!' }]}>
                         <InputNumber min={1} style={{ width: '100%' }} />
                     </Form.Item>
                 </Col>
            </Row>
            <Row gutter={16}>
                 <Col xs={24} md={16}>
-                    <Form.Item label="Tình trạng thiết bị khi mượn/trả" name="device_status" rules={[{ required: true }]}>
+                    <Form.Item label="Tình trạng thiết bị khi mượn/trả" name="device_status" rules={[{ required: true, message: 'Vui lòng chọn tình trạng thiết bị!' }]}>
                         <Select>
                             <Option value="Bình thường">Bình thường</Option>
                             <Option value="Tự trang bị">Tự trang bị</Option>
