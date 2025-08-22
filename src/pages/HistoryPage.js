@@ -2,25 +2,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, message, Popconfirm, Modal, Form, Input, DatePicker, InputNumber, Select, Checkbox, Card, Typography, Row, Col } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import apiClient from '../api/axiosConfig';
-import useAuth from '../hooks/useAuth'; // Import hook để lấy thông tin người dùng
+import useAuth from '../hooks/useAuth';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { Title } = Typography;
 
 const HistoryPage = () => {
-  const user = useAuth(); // Lấy thông tin người dùng hiện tại
+  const user = useAuth();
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingForm, setEditingForm] = useState(null);
   const [form] = Form.useForm();
 
-  // State mới cho bộ lọc của leader
   const [departmentUsers, setDepartmentUsers] = useState([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState(null);
 
-  // Lấy danh sách giáo viên trong tổ nếu người dùng là leader
   useEffect(() => {
     if (user?.role === 'leader') {
       const fetchDepartmentUsers = async () => {
@@ -41,7 +39,7 @@ const HistoryPage = () => {
       const response = await apiClient.get('/forms', {
         params: {
           search: searchTerm,
-          teacherId: teacherId, // Gửi ID giáo viên cần lọc lên backend
+          teacherId: teacherId,
         },
       });
       setForms(response.data);
@@ -53,7 +51,6 @@ const HistoryPage = () => {
   }, []);
 
   useEffect(() => {
-    // Tải dữ liệu lần đầu (lọc theo giáo viên nếu đã chọn)
     fetchForms('', selectedTeacherId);
   }, [fetchForms, selectedTeacherId]);
 
@@ -63,7 +60,6 @@ const HistoryPage = () => {
 
   const handleTeacherFilterChange = (teacherId) => {
     setSelectedTeacherId(teacherId);
-    // Khi đổi bộ lọc, useEffect sẽ tự động tải lại dữ liệu
   };
 
   const handleDelete = async (id) => {
@@ -121,7 +117,7 @@ const HistoryPage = () => {
     {
       title: 'Hành động',
       key: 'action',
-      fixed: 'right', // Giữ cột hành động cố định khi cuộn ngang
+      fixed: 'right',
       width: 150,
       render: (_, record) => (
         <Space size="middle">
@@ -142,7 +138,6 @@ const HistoryPage = () => {
   return (
     <Card>
       <Title level={3}>Lịch sử mượn trả thiết bị</Title>
-      {/* SỬA LỖI: Sử dụng Row và Col để làm responsive */}
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} md={12} lg={8}>
           <Input.Search
@@ -175,7 +170,7 @@ const HistoryPage = () => {
         loading={loading} 
         rowKey="id" 
         bordered 
-        scroll={{ x: 'max-content' }} // Cho phép cuộn ngang trên màn hình nhỏ
+        scroll={{ x: 'max-content' }}
       />
 
       <Modal
@@ -185,14 +180,74 @@ const HistoryPage = () => {
         onCancel={() => setIsModalVisible(false)}
         width={800}
       >
-        {/* Form chỉnh sửa cũng cần được làm responsive */}
+        {/* SỬA LỖI: Thêm đầy đủ các trường vào form chỉnh sửa */}
         <Form form={form} layout="vertical">
            <Row gutter={16}>
-                <Col xs={24} md={8}><Form.Item label="Tuần (1-35)" name="week" rules={[{ required: true }]}><InputNumber min={1} max={35} style={{ width: '100%' }} /></Form.Item></Col>
-                <Col xs={24} md={8}><Form.Item label="Ngày mượn" name="borrow_date" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item></Col>
-                <Col xs={24} md={8}><Form.Item label="Ngày trả" name="return_date" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item></Col>
+                <Col xs={24} md={8}>
+                    <Form.Item label="Tuần (1-35)" name="week" rules={[{ required: true }]}>
+                        <InputNumber min={1} max={35} style={{ width: '100%' }} />
+                    </Form.Item>
+                </Col>
+                <Col xs={24} md={8}>
+                    <Form.Item label="Ngày mượn" name="borrow_date" rules={[{ required: true }]}>
+                        <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                    </Form.Item>
+                </Col>
+                <Col xs={24} md={8}>
+                    <Form.Item label="Ngày trả" name="return_date" rules={[{ required: true }]}>
+                        <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                    </Form.Item>
+                </Col>
            </Row>
-           {/* ... Các trường Form.Item khác cũng nên được đặt trong Row/Col tương tự ... */}
+           <Row gutter={16}>
+                <Col xs={24} md={16}>
+                    <Form.Item label="Thiết bị mượn sử dụng" name="device_name" rules={[{ required: true }]}>
+                        <Input />
+                    </Form.Item>
+                </Col>
+                <Col xs={24} md={8}>
+                    <Form.Item label="Số lượng" name="quantity" rules={[{ required: true }]}>
+                        <InputNumber min={1} style={{ width: '100%' }} />
+                    </Form.Item>
+                </Col>
+           </Row>
+           <Form.Item label="Tên bài dạy" name="lesson_name" rules={[{ required: true }]}>
+                <Input.TextArea rows={2} />
+           </Form.Item>
+           <Row gutter={16}>
+                <Col xs={24} md={8}>
+                    <Form.Item label="Dạy tiết" name="teaching_period">
+                        <Input placeholder="Ví dụ: 1, 2, 4" />
+                    </Form.Item>
+                </Col>
+                <Col xs={24} md={8}>
+                    <Form.Item label="Dạy lớp" name="class_name">
+                        <Input placeholder="Ví dụ: 6A3, 9A2" />
+                    </Form.Item>
+                </Col>
+                <Col xs={24} md={8}>
+                    <Form.Item label="Số lượt sử dụng" name="usage_count" rules={[{ required: true }]}>
+                        <InputNumber min={1} style={{ width: '100%' }} />
+                    </Form.Item>
+                </Col>
+           </Row>
+           <Row gutter={16}>
+                <Col xs={24} md={16}>
+                    <Form.Item label="Tình trạng thiết bị khi mượn/trả" name="device_status" rules={[{ required: true }]}>
+                        <Select>
+                            <Option value="Bình thường">Bình thường</Option>
+                            <Option value="Tự trang bị">Tự trang bị</Option>
+                            <Option value="Hao hụt hóa chất">Hao hụt hóa chất</Option>
+                            <Option value="Hỏng">Hỏng</Option>
+                        </Select>
+                    </Form.Item>
+                </Col>
+                <Col xs={24} md={8} style={{ display: 'flex', alignItems: 'center' }}>
+                    <Form.Item name="uses_it" valuePropName="checked">
+                        <Checkbox>Có ứng dụng CNTT</Checkbox>
+                    </Form.Item>
+                </Col>
+           </Row>
         </Form>
       </Modal>
     </Card>
