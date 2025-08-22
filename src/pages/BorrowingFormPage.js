@@ -92,12 +92,12 @@ const BorrowingFormPage = () => {
 
         <Row gutter={16}>
           <Col xs={24} md={8}>
-            <Form.Item label="Dạy tiết" name="teaching_period">
+            <Form.Item label="Dạy tiết" name="teaching_period" rules={[{ required: true, message: 'Vui lòng nhập tiết dạy!' }]}>
               <Input placeholder="Ví dụ: 1, 2, 4" />
             </Form.Item>
           </Col>
           <Col xs={24} md={8}>
-            <Form.Item label="Dạy lớp" name="class_name">
+            <Form.Item label="Dạy lớp" name="class_name" rules={[{ required: true, message: 'Vui lòng nhập lớp dạy!' }]}>
               <Input placeholder="Ví dụ: 6A3, 9A2" />
             </Form.Item>
           </Col>
