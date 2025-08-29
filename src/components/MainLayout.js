@@ -80,7 +80,8 @@ const MainLayout = () => {
       <Layout>
         <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <Space align="center">
-             <Text>Xin chào, <strong>{user?.username}</strong></Text>
+             {/* SỬA LỖI: Hiển thị fullName thay vì username */}
+             <Text>Xin chào, <strong>{user?.fullName || user?.username}</strong></Text>
             <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
               Đăng xuất
             </Button>
