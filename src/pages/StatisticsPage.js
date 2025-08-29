@@ -40,27 +40,23 @@ const StatisticsPage = () => {
   const [userId, setUserId] = useState(null);
 
   const [departments, setDepartments] = useState([]);
-  const [allUsers, setAllUsers] = useState([]); // Lưu toàn bộ user
-  const [filteredUsers, setFilteredUsers] = useState([]); // User đã lọc để hiển thị
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   const fetchDataForFilters = useCallback(async () => {
+    // Admin và manager chỉ cần lấy danh sách tổ ban đầu
     if (user?.role === 'admin' || user?.role === 'manager') {
       try {
-        const [usersRes, deptsRes] = await Promise.all([
-            apiClient.get('/admin/users'),
-            apiClient.get('/admin/departments')
-        ]);
-        const relevantUsers = usersRes.data.filter(u => u.role === 'teacher' || u.role === 'leader');
-        setAllUsers(relevantUsers); // Lưu danh sách gốc
-        setFilteredUsers(relevantUsers); // Ban đầu hiển thị tất cả
+        const deptsRes = await apiClient.get('/admin/departments');
         setDepartments(deptsRes.data);
       } catch (error) {
-        message.error('Lỗi khi tải dữ liệu cho bộ lọc.');
+        message.error('Lỗi khi tải danh sách tổ chuyên môn.');
       }
-    } else if (user?.role === 'leader') {
+    } 
+    // Leader lấy danh sách giáo viên trong tổ của mình
+    else if (user?.role === 'leader') {
       try {
         setLoadingUsers(true);
         const response = await apiClient.get('/filters/users-in-department');
@@ -77,16 +73,26 @@ const StatisticsPage = () => {
     fetchDataForFilters();
   }, [fetchDataForFilters]);
 
-  // SỬA LỖI: Cập nhật logic lọc
-  const handleDepartmentChange = (selectedDeptId) => {
+  // SỬA LỖI: Chuyển sang lọc bằng API
+  const handleDepartmentChange = async (selectedDeptId) => {
     setDepartmentId(selectedDeptId);
     setUserId(null); // Reset lựa chọn giáo viên
 
     if (!selectedDeptId) {
-      setFilteredUsers(allUsers); // Nếu không chọn tổ, hiển thị tất cả
-    } else {
-      // Lọc danh sách giáo viên theo tổ đã chọn
-      setFilteredUsers(allUsers.filter(u => u.department_id === selectedDeptId));
+      setFilteredUsers([]); // Nếu không chọn tổ, danh sách giáo viên trống
+      return;
+    }
+
+    try {
+        setLoadingUsers(true);
+        // Gọi API để lấy danh sách user theo tổ đã chọn
+        const response = await apiClient.get(`/filters/users-by-department/${selectedDeptId}`);
+        setFilteredUsers(response.data);
+    } catch (error) {
+        message.error('Lỗi khi tải danh sách giáo viên.');
+        setFilteredUsers([]);
+    } finally {
+        setLoadingUsers(false);
     }
   };
 
