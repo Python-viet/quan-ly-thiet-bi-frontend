@@ -95,6 +95,8 @@ const MainLayout = () => {
                     </div>
                 </Content>
             </Layout>
+        </Header>
+      </Layout>
     </Layout>
   );
 };
