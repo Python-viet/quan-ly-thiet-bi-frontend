@@ -79,7 +79,7 @@ const MainLayout = () => {
       </Sider>
       <Layout>
         <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <Layout> //<-- Bắt đầu từ đây
+            <Layout>
                 <Header style={{ padding: '0 16px', background: colorBgContainer, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                     <Space>
                         {/* SỬA LỖI: Hiển thị fullName thay vì username */}
@@ -95,19 +95,6 @@ const MainLayout = () => {
                     </div>
                 </Content>
             </Layout>
-          //<Space align="center">
-            // <Text>Xin chào, <strong>{user?.username}</strong></Text>
-          //  <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
-          //    Đăng xuất
-          //  </Button>
-        //  </Space>
-      //  </Header>
-     //   <Content style={{ margin: '16px' }}>
-     //     <div style={{ padding: 24, minHeight: 360, background: '#fff' }}>
-     //       <Outlet />
-     //     </div>
-    //    </Content>
-    //  </Layout>
     </Layout>
   );
 };
