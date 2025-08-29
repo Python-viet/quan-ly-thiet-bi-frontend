@@ -79,19 +79,35 @@ const MainLayout = () => {
       </Sider>
       <Layout>
         <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-          <Space align="center">
-            <Text>Xin chào, <strong>{user?.username}</strong></Text>
-            <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
-              Đăng xuất
-            </Button>
-          </Space>
-        </Header>
-        <Content style={{ margin: '16px' }}>
-          <div style={{ padding: 24, minHeight: 360, background: '#fff' }}>
-            <Outlet />
-          </div>
-        </Content>
-      </Layout>
+            <Layout> //<-- Bắt đầu từ đây
+                <Header style={{ padding: '0 16px', background: colorBgContainer, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <Space>
+                        {/* SỬA LỖI: Hiển thị fullName thay vì username */}
+                        <span>Xin chào, {auth.user?.fullName || auth.user?.username}</span>
+                        <Button type="primary" icon={<LogoutOutlined />} onClick={handleLogout}>
+                            Đăng xuất
+                        </Button>
+                    </Space>
+                </Header>
+                <Content style={{ margin: '24px 16px 0' }}>
+                    <div style={{ padding: 24, minHeight: 360, background: colorBgContainer, borderRadius: borderRadiusLG }}>
+                        {children}
+                    </div>
+                </Content>
+            </Layout>
+          //<Space align="center">
+            // <Text>Xin chào, <strong>{user?.username}</strong></Text>
+          //  <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
+          //    Đăng xuất
+          //  </Button>
+        //  </Space>
+      //  </Header>
+     //   <Content style={{ margin: '16px' }}>
+     //     <div style={{ padding: 24, minHeight: 360, background: '#fff' }}>
+     //       <Outlet />
+     //     </div>
+    //    </Content>
+    //  </Layout>
     </Layout>
   );
 };
