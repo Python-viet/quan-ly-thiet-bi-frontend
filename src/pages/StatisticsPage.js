@@ -1,3 +1,5 @@
+// File: src/pages/StatisticsPage.js (Cập nhật hoàn chỉnh)
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Select, Button, message, Statistic, Typography, Space } from 'antd';
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
@@ -7,8 +9,6 @@ import useAuth from '../hooks/useAuth';
 const { Title } = Typography;
 const { Option } = Select;
 
-// --- HELPER FUNCTIONS CHO NĂM HỌC ---
-
 const getCurrentSchoolYear = () => {
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
@@ -16,16 +16,11 @@ const getCurrentSchoolYear = () => {
     return currentMonth >= 8 ? `${currentYear}-${currentYear + 1}` : `${currentYear - 1}-${currentYear}`;
 };
 
-// SỬA LỖI: Chỉ hiển thị năm học hiện tại và năm học trước đó
 const generateSchoolYears = () => {
     const years = [];
     const [currentStart, currentEnd] = getCurrentSchoolYear().split('-').map(Number);
-
-    // Thêm năm học hiện tại
     years.push(`${currentStart}-${currentEnd}`);
-    // Thêm năm học trước đó
     years.push(`${currentStart - 1}-${currentEnd - 1}`);
-    
     return years;
 };
 
@@ -37,18 +32,16 @@ const schoolMonths = [
     { value: 5, label: 'Tháng 5' }
 ];
 
-
 const StatisticsPage = () => {
   const user = useAuth();
   const [schoolYear, setSchoolYear] = useState(getCurrentSchoolYear());
   const [month, setMonth] = useState(9);
-  
   const [departmentId, setDepartmentId] = useState(user?.role === 'leader' ? user.departmentId : null);
   const [userId, setUserId] = useState(null);
 
   const [departments, setDepartments] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // Lưu toàn bộ user
+  const [filteredUsers, setFilteredUsers] = useState([]); // User đã lọc để hiển thị
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -61,8 +54,8 @@ const StatisticsPage = () => {
             apiClient.get('/admin/departments')
         ]);
         const relevantUsers = usersRes.data.filter(u => u.role === 'teacher' || u.role === 'leader');
-        setAllUsers(relevantUsers);
-        setFilteredUsers(relevantUsers);
+        setAllUsers(relevantUsers); // Lưu danh sách gốc
+        setFilteredUsers(relevantUsers); // Ban đầu hiển thị tất cả
         setDepartments(deptsRes.data);
       } catch (error) {
         message.error('Lỗi khi tải dữ liệu cho bộ lọc.');
@@ -84,13 +77,15 @@ const StatisticsPage = () => {
     fetchDataForFilters();
   }, [fetchDataForFilters]);
 
+  // SỬA LỖI: Cập nhật logic lọc
   const handleDepartmentChange = (selectedDeptId) => {
     setDepartmentId(selectedDeptId);
-    setUserId(null);
+    setUserId(null); // Reset lựa chọn giáo viên
 
     if (!selectedDeptId) {
-      setFilteredUsers(allUsers);
+      setFilteredUsers(allUsers); // Nếu không chọn tổ, hiển thị tất cả
     } else {
+      // Lọc danh sách giáo viên theo tổ đã chọn
       setFilteredUsers(allUsers.filter(u => u.department_id === selectedDeptId));
     }
   };
@@ -135,28 +130,27 @@ const StatisticsPage = () => {
   return (
     <Card>
       <Title level={3}>Thống kê và Báo cáo</Title>
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {/* SỬA LỖI: Thêm thuộc tính responsive cho Col */}
-        <Col xs={24} sm={12} md={8} lg={6}>
-            <Select value={schoolYear} onChange={setSchoolYear} style={{ width: '100%' }}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }} align="bottom">
+        <Col>
+            <Select value={schoolYear} onChange={setSchoolYear} style={{ width: 150 }}>
                 {generateSchoolYears().map(year => <Option key={year} value={year}>Năm học {year}</Option>)}
             </Select>
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-            <Select value={month} onChange={setMonth} style={{ width: '100%' }}>
+        <Col>
+            <Select value={month} onChange={setMonth} style={{ width: 120 }}>
                 {schoolMonths.map(m => <Option key={m.value} value={m.value}>{m.label}</Option>)}
             </Select>
         </Col>
         
         {(user?.role === 'admin' || user?.role === 'manager') && (
           <>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Select placeholder="Chọn tổ chuyên môn" onChange={handleDepartmentChange} style={{ width: '100%' }} allowClear>
+            <Col>
+              <Select placeholder="Chọn tổ chuyên môn" onChange={handleDepartmentChange} style={{ width: 200 }} allowClear>
                 {departments.map(d => <Option key={d.id} value={d.id}>{d.name}</Option>)}
               </Select>
             </Col>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Select placeholder="Chọn giáo viên" value={userId} onChange={setUserId} style={{ width: '100%' }} allowClear loading={loadingUsers}>
+            <Col>
+              <Select placeholder="Chọn giáo viên" value={userId} onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
                 {filteredUsers.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
               </Select>
             </Col>
@@ -164,18 +158,14 @@ const StatisticsPage = () => {
         )}
 
         {user?.role === 'leader' && (
-            <Col xs={24} sm={24} md={8} lg={6}>
-              <Select placeholder="Chọn giáo viên trong tổ" onChange={setUserId} style={{ width: '100%' }} allowClear loading={loadingUsers}>
+            <Col>
+              <Select placeholder="Chọn giáo viên trong tổ" onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
                 {filteredUsers.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
               </Select>
             </Col>
         )}
 
-        <Col xs={24} sm={24} md={8} lg={6}>
-            <Button type="primary" onClick={() => handleAction('fetch')} loading={loading} style={{ width: '100%' }}>
-                Xem thống kê
-            </Button>
-        </Col>
+        <Col><Button type="primary" onClick={() => handleAction('fetch')} loading={loading}>Xem thống kê</Button></Col>
       </Row>
 
       {stats && (
