@@ -36,10 +36,12 @@ const HomePage = () => {
 
   return (
     <div>
-      <Title>Chào mừng, {user?.username}!</Title>
+      {/* SỬA LỖI: Hiển thị fullName thay vì username */}
+      <Title>Chào mừng, {user?.fullName || user?.username}!</Title>
     <Paragraph>
         Bạn đã đăng nhập với vai trò: <strong>{user?.role}</strong>. Dưới đây là tổng quan nhanh về hệ thống.
    </Paragraph>
+    
       {loading ? (
         <Spin size="large" />
       ) : (
