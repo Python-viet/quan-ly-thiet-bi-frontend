@@ -44,11 +44,7 @@ const HomePage = () => {
             <Paragraph>
                 Bạn đã đăng nhập với vai trò <Text strong>{auth.user.role}</Text>. Dưới đây là tổng quan nhanh về hệ thống.
             </Paragraph>
-     // <Title>Chào mừng, {user?.username}!</Title>
-      //<Paragraph>
-        //Bạn đã đăng nhập với vai trò: <strong>{user?.role}</strong>. Dưới đây là tổng quan nhanh về hệ thống.
-     // </Paragraph>
-      
+    
       {loading ? (
         <Spin size="large" />
       ) : (
