@@ -35,18 +35,15 @@ const StatisticsPage = () => {
   const [schoolYear, setSchoolYear] = useState(getCurrentSchoolYear());
   const [month, setMonth] = useState(9);
   
-  // States cho bộ lọc của admin/leader
   const [departmentId, setDepartmentId] = useState(user?.role === 'leader' ? user.departmentId : null);
   const [userId, setUserId] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
-  // States chung
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Hàm này chỉ chạy khi là admin/manager/leader để lấy dữ liệu cho bộ lọc
   const fetchDataForFilters = useCallback(async () => {
     if (user?.role === 'admin' || user?.role === 'manager') {
       try {
@@ -70,13 +67,11 @@ const StatisticsPage = () => {
   }, [user]);
 
   useEffect(() => {
-    // Chỉ gọi API này nếu không phải là giáo viên
     if (user?.role !== 'teacher') {
         fetchDataForFilters();
     }
   }, [fetchDataForFilters, user?.role]);
 
-  // Handler chỉ dành cho admin/manager
   const handleDepartmentChange = async (selectedDeptId) => {
     setDepartmentId(selectedDeptId);
     setUserId(null); 
@@ -102,18 +97,14 @@ const StatisticsPage = () => {
 
     let params;
 
-    // Phân luồng logic theo vai trò
     if (user.role === 'teacher') {
         params = {
             year: yearToSend,
             month,
-            // Backend sẽ tự động lấy userId từ token cho việc thống kê,
-            // nhưng chúng ta vẫn gửi departmentId và userId để xuất file cho đúng
             departmentId: user.departmentId,
             userId: user.id
         };
     } else {
-        // Giữ nguyên logic cho các vai trò khác
         params = {
             year: yearToSend,
             month,
@@ -127,19 +118,30 @@ const StatisticsPage = () => {
         try {
             const response = await apiClient.get('/stats', { params });
             setStats(response.data);
+            if(response.data.total_forms === 0) {
+              message.info('Không có dữ liệu thống kê cho lựa chọn này.');
+            }
         } catch (error) {
             message.error('Lỗi khi tải dữ liệu thống kê.');
         } finally {
             setLoading(false);
         }
     } else if (actionType === 'excel' || actionType === 'pdf') {
-        if (!params.departmentId) {
+        // *** SỬA LỖI QUAN TRỌNG TẠI ĐÂY ***
+        // Chỉ kiểm tra departmentId nếu người dùng không phải là teacher
+        if (!params.departmentId && user.role !== 'teacher') {
             message.warning('Vui lòng chọn một tổ chuyên môn để xuất báo cáo.');
             return;
         }
+        // Thêm kiểm tra cho teacher nếu tài khoản chưa có tổ
+        if (!params.departmentId && user.role === 'teacher') {
+            message.error('Tài khoản của bạn chưa được gán vào tổ chuyên môn. Vui lòng liên hệ Admin.');
+            return;
+        }
+
         try {
             const response = await apiClient.get(`/export/${actionType}`, {
-                params: { ...params, userId: params.userId || '' }, // Đảm bảo userId không bị null
+                params: { ...params, userId: params.userId || '' },
                 responseType: 'blob',
             });
             const blob = new Blob([response.data]);
@@ -150,7 +152,12 @@ const StatisticsPage = () => {
             link.click();
             window.URL.revokeObjectURL(link.href);
         } catch(e) {
-            message.error("Xuất file thất bại!");
+            // Hiển thị lỗi nếu không có dữ liệu để xuất
+            if (e.response && e.response.status === 404) {
+                 message.warning('Không có dữ liệu để xuất file báo cáo.');
+            } else {
+                 message.error("Xuất file thất bại!");
+            }
         }
     }
   };
@@ -170,11 +177,10 @@ const StatisticsPage = () => {
             </Select>
         </Col>
         
-        {/* Bộ lọc này chỉ hiển thị cho admin và manager */}
         {(user?.role === 'admin' || user?.role === 'manager') && (
           <>
             <Col>
-              <Select placeholder="Chọn tổ chuyên môn" onChange={handleDepartmentChange} style={{ width: 200 }} allowClear>
+              <Select placeholder="Chọn tổ chuyên môn" value={departmentId} onChange={handleDepartmentChange} style={{ width: 200 }} allowClear>
                 {departments.map(d => <Option key={d.id} value={d.id}>{d.name}</Option>)}
               </Select>
             </Col>
@@ -186,16 +192,14 @@ const StatisticsPage = () => {
           </>
         )}
 
-        {/* Bộ lọc này chỉ hiển thị cho leader */}
         {user?.role === 'leader' && (
             <Col>
-              <Select placeholder="Chọn giáo viên trong tổ" onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
+              <Select placeholder="Chọn giáo viên trong tổ" value={userId} onChange={setUserId} style={{ width: 200 }} allowClear loading={loadingUsers}>
                 {filteredUsers.map(u => <Option key={u.id} value={u.id}>{u.full_name}</Option>)}
               </Select>
             </Col>
         )}
 
-        {/* Nút này hiển thị cho tất cả mọi người */}
         <Col><Button type="primary" onClick={() => handleAction('fetch')} loading={loading}>Xem thống kê</Button></Col>
       </Row>
 
