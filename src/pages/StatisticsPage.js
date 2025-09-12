@@ -1,5 +1,3 @@
-// File: src/pages/StatisticsPage.js (Cập nhật hoàn chỉnh)
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Select, Button, message, Statistic, Typography, Space } from 'antd';
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
@@ -36,7 +34,7 @@ const StatisticsPage = () => {
   const user = useAuth();
   const [schoolYear, setSchoolYear] = useState(getCurrentSchoolYear());
   const [month, setMonth] = useState(9);
-  const [departmentId, setDepartmentId] = useState(user?.role === 'leader' ? user.departmentId : null);
+  const [departmentId, setDepartmentId] = useState(user?.role === 'leader' || user?.role === 'teacher' ? user.departmentId : null);
   const [userId, setUserId] = useState(null);
 
   const [departments, setDepartments] = useState([]);
@@ -46,7 +44,6 @@ const StatisticsPage = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   const fetchDataForFilters = useCallback(async () => {
-    // Admin và manager chỉ cần lấy danh sách tổ ban đầu
     if (user?.role === 'admin' || user?.role === 'manager') {
       try {
         const deptsRes = await apiClient.get('/admin/departments');
@@ -55,7 +52,6 @@ const StatisticsPage = () => {
         message.error('Lỗi khi tải danh sách tổ chuyên môn.');
       }
     } 
-    // Leader lấy danh sách giáo viên trong tổ của mình
     else if (user?.role === 'leader') {
       try {
         setLoadingUsers(true);
@@ -73,19 +69,17 @@ const StatisticsPage = () => {
     fetchDataForFilters();
   }, [fetchDataForFilters]);
 
-  // SỬA LỖI: Chuyển sang lọc bằng API
   const handleDepartmentChange = async (selectedDeptId) => {
     setDepartmentId(selectedDeptId);
-    setUserId(null); // Reset lựa chọn giáo viên
+    setUserId(null); 
 
     if (!selectedDeptId) {
-      setFilteredUsers([]); // Nếu không chọn tổ, danh sách giáo viên trống
+      setFilteredUsers([]);
       return;
     }
 
     try {
         setLoadingUsers(true);
-        // Gọi API để lấy danh sách user theo tổ đã chọn
         const response = await apiClient.get(`/filters/users-by-department/${selectedDeptId}`);
         setFilteredUsers(response.data);
     } catch (error) {
@@ -100,10 +94,16 @@ const StatisticsPage = () => {
     const [startYear, endYear] = schoolYear.split('-').map(Number);
     const yearToSend = month >= 9 ? startYear : endYear;
 
+    const params = {
+        year: yearToSend,
+        month,
+        departmentId: departmentId,
+        userId: userId,
+    };
+    
     if (actionType === 'fetch') {
         setLoading(true);
         try {
-            const params = { year: yearToSend, month, departmentId, userId };
             const response = await apiClient.get('/stats', { params });
             setStats(response.data);
         } catch (error) {
