@@ -22,6 +22,7 @@ const getMenuItems = (role) => {
       { key: '/app/home', icon: <HomeOutlined />, label: <Link to="/app/home">Trang chủ</Link> },
       { key: '/app/new-form', icon: <FormOutlined />, label: <Link to="/app/new-form">Nhập phiếu mượn</Link> },
       { key: '/app/history', icon: <HistoryOutlined />, label: <Link to="/app/history">Lịch sử mượn</Link> },
+      { key: '/app/statistics', icon: <BarChartOutlined />, label: <Link to="/app/statistics">Thống kê</Link> },
     ];
   }
 
@@ -80,7 +81,6 @@ const MainLayout = () => {
       <Layout>
         <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <Space align="center">
-             {/* SỬA LỖI: Hiển thị fullName thay vì username */}
              <Text>Xin chào, <strong>{user?.fullName || user?.username}</strong></Text>
             <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
               Đăng xuất
