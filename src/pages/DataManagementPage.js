@@ -30,7 +30,7 @@ const DataManagementPage = () => {
     const handleNewYear = async () => {
         try {
             await apiClient.post('/admin/new-year');
-            message.success('Khởi tạo năm học mới thành công!');
+            message.success('Đã khởi tạo năm học mới và xóa toàn bộ phiếu mượn cũ.');
         } catch (error) {
             message.error(error.response?.data?.error || 'Lỗi khi khởi tạo năm học mới.');
         }
@@ -62,17 +62,17 @@ const DataManagementPage = () => {
                 <div>
                     <Title level={4}>Khởi tạo Năm học mới</Title>
                     <Paragraph>
-                        <Text strong type="danger">CẢNH BÁO:</Text> Hành động này không thể hoàn tác.
+                        <Text strong type="danger">CẢNH BÁO:</Text> Hành động này sẽ xóa vĩnh viễn toàn bộ phiếu mượn.
                         <br />
-                        Nó sẽ di chuyển toàn bộ phiếu mượn của năm học hiện tại vào khu vực lưu trữ và xóa sạch dữ liệu phiếu mượn trên hệ thống để chuẩn bị cho năm học mới.
+                        Cả phiếu mượn đang sử dụng và phiếu đã lưu trữ đều sẽ bị xóa để chuẩn bị cho năm học mới. Tài khoản giáo viên và tổ chuyên môn vẫn được giữ nguyên.
                         <br />
-                        Bạn nên <Text strong>thực hiện Sao lưu</Text> trước khi tiến hành.
+                        Dữ liệu đã xóa chỉ có thể lấy lại từ tệp sao lưu, vì vậy bạn nên <Text strong>thực hiện Sao lưu</Text> trước khi tiến hành.
                     </Paragraph>
                     <Popconfirm
                         title="Bạn có chắc chắn muốn khởi tạo năm học mới?"
-                        description="Toàn bộ phiếu mượn sẽ được lưu trữ và làm trống."
+                        description="Phiếu mượn hiện hành và đã lưu trữ sẽ bị xóa vĩnh viễn; tài khoản vẫn được giữ nguyên."
                         onConfirm={handleNewYear}
-                        okText="Có, tôi chắc chắn"
+                        okText="Đồng ý xóa"
                         cancelText="Không"
                     >
                         <Button icon={<RedoOutlined />} danger>
