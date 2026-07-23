@@ -1,0 +1,52 @@
+.user-management-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.user-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.user-management-header h3 {
+  margin: 0 0 4px;
+}
+
+.user-management-table .ant-table-cell {
+  vertical-align: middle;
+}
+
+.role-user-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.role-change-note {
+  margin-top: -4px;
+}
+
+@media (max-width: 767px) {
+  .user-management-header {
+    flex-direction: column;
+  }
+
+  .user-management-header > .ant-space,
+  .user-management-header > .ant-space .ant-space-item,
+  .user-management-header button {
+    width: 100%;
+  }
+
+  .user-management-table .ant-table-thead > tr > th,
+  .user-management-table .ant-table-tbody > tr > td {
+    padding: 10px 8px;
+  }
+}
