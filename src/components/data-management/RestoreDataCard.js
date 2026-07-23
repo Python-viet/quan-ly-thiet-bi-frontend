@@ -1,6 +1,25 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Button, Card, Descriptions, Modal, Space, Typography, Upload, message } from 'antd';
-import { InboxOutlined, SafetyCertificateOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Modal,
+  Row,
+  Space,
+  Tag,
+  Typography,
+  Upload,
+  message,
+} from 'antd';
+import {
+  CheckCircleFilled,
+  FileSearchOutlined,
+  InboxOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import apiClient from '../../api/axiosConfig';
 
 const { Dragger } = Upload;
@@ -67,22 +86,40 @@ const RestoreDataCard = () => {
     }
   };
 
+  const resetFile = () => {
+    setFile(null);
+    setValidation(null);
+  };
+
   return (
-    <Card bordered={false} style={{ background: '#fafafa' }}>
-      <Title level={4}>Khôi phục dữ liệu</Title>
-      <Paragraph>
-        Chọn tệp JSON đã tạo từ chức năng sao lưu. Hệ thống sẽ kiểm tra tệp trước khi cho phép khôi phục.
+    <Card className="management-action-card restore-card" bordered={false}>
+      <div className="management-action-card__header">
+        <div className="management-action-card__icon restore-icon">
+          <ReloadOutlined />
+        </div>
+        <div>
+          <Text className="management-action-card__eyebrow">PHỤC HỒI HỆ THỐNG</Text>
+          <Space size={8} wrap>
+            <Title level={3}>Khôi phục dữ liệu</Title>
+            {validation?.valid && <Tag color="success" icon={<CheckCircleFilled />}>Tệp hợp lệ</Tag>}
+          </Space>
+        </div>
+      </div>
+
+      <Paragraph className="management-action-card__description">
+        Chọn tệp JSON đã tạo từ chức năng sao lưu. Hệ thống sẽ kiểm tra cấu trúc và hiển thị thông tin trước khi cho phép khôi phục.
       </Paragraph>
 
       <Alert
         type="warning"
         showIcon
-        message="Dữ liệu phiếu mượn hiện tại sẽ được thay thế"
-        description="Tổ chuyên môn và tài khoản trong tệp sẽ được tạo mới hoặc cập nhật theo ID; các tổ và tài khoản khác đang có sẽ được giữ nguyên. Mọi thay đổi được thực hiện trong một giao dịch và tự hoàn tác nếu xảy ra lỗi."
-        style={{ marginBottom: 16 }}
+        message="Phiếu mượn hiện tại sẽ được thay thế"
+        description="Tài khoản và tổ chuyên môn được thêm mới hoặc cập nhật theo ID; các tài khoản khác đang có vẫn được giữ nguyên."
+        className="restore-warning"
       />
 
       <Dragger
+        className="restore-uploader"
         accept=".json,application/json"
         maxCount={1}
         beforeUpload={(selectedFile) => {
@@ -90,39 +127,56 @@ const RestoreDataCard = () => {
           setValidation(null);
           return false;
         }}
-        onRemove={() => {
-          setFile(null);
-          setValidation(null);
-        }}
+        onRemove={resetFile}
         fileList={file ? [file] : []}
       >
         <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-        <p className="ant-upload-text">Nhấp hoặc kéo tệp sao lưu JSON vào đây</p>
-        <p className="ant-upload-hint">Dung lượng tối đa 10 MB</p>
+        <p className="ant-upload-text">Nhấp hoặc kéo tệp sao lưu vào đây</p>
+        <p className="ant-upload-hint">Chỉ nhận tệp JSON, dung lượng tối đa 10 MB</p>
       </Dragger>
 
-      <Space wrap style={{ marginTop: 16 }}>
-        <Button icon={<SafetyCertificateOutlined />} loading={checking} disabled={!file} onClick={handleValidate}>
-          Kiểm tra tệp
-        </Button>
-        <Button
-          type="primary"
-          danger
-          icon={<UploadOutlined />}
-          disabled={!validation?.valid}
-          onClick={() => setConfirmOpen(true)}
-        >
-          Khôi phục dữ liệu
-        </Button>
-      </Space>
+      <Row gutter={[12, 12]} className="restore-actions">
+        <Col xs={24} sm={validation?.valid ? 12 : 24}>
+          <Button
+            size="large"
+            block
+            icon={<FileSearchOutlined />}
+            loading={checking}
+            disabled={!file}
+            onClick={handleValidate}
+          >
+            Kiểm tra tệp sao lưu
+          </Button>
+        </Col>
+        {validation?.valid && (
+          <Col xs={24} sm={12}>
+            <Button
+              type="primary"
+              danger
+              size="large"
+              block
+              icon={<UploadOutlined />}
+              onClick={() => setConfirmOpen(true)}
+            >
+              Khôi phục dữ liệu
+            </Button>
+          </Col>
+        )}
+      </Row>
 
       {validation?.valid && (
-        <Descriptions bordered size="small" column={1} style={{ marginTop: 16 }}>
-          <Descriptions.Item label="Ngày sao lưu">{backupDateText}</Descriptions.Item>
-          <Descriptions.Item label="Tổ chuyên môn">{validation.summary.departments}</Descriptions.Item>
-          <Descriptions.Item label="Tài khoản">{validation.summary.users}</Descriptions.Item>
-          <Descriptions.Item label="Phiếu mượn">{validation.summary.borrowingForms}</Descriptions.Item>
-        </Descriptions>
+        <div className="restore-summary">
+          <div className="restore-summary__title">
+            <CheckCircleFilled /> Thông tin bản sao lưu
+          </div>
+          <Descriptions size="small" column={{ xs: 1, sm: 2 }} colon={false}>
+            <Descriptions.Item label="Ngày sao lưu" span={2}>{backupDateText}</Descriptions.Item>
+            <Descriptions.Item label="Tổ chuyên môn"><Text strong>{validation.summary.departments}</Text></Descriptions.Item>
+            <Descriptions.Item label="Tài khoản"><Text strong>{validation.summary.users}</Text></Descriptions.Item>
+            <Descriptions.Item label="Phiếu mượn"><Text strong>{validation.summary.borrowingForms}</Text></Descriptions.Item>
+            <Descriptions.Item label="Trạng thái"><Tag color="success">Sẵn sàng</Tag></Descriptions.Item>
+          </Descriptions>
+        </div>
       )}
 
       <Modal
@@ -138,9 +192,13 @@ const RestoreDataCard = () => {
         onCancel={() => setConfirmOpen(false)}
       >
         <Paragraph>
-          Thao tác này sẽ thay thế toàn bộ phiếu mượn hiện tại bằng <Text strong>{validation?.summary?.borrowingForms || 0}</Text> phiếu trong bản sao lưu.
+          Hệ thống sẽ thay thế toàn bộ phiếu mượn hiện tại bằng <Text strong>{validation?.summary?.borrowingForms || 0}</Text> phiếu trong bản sao lưu.
         </Paragraph>
-        <Text strong type="danger">Bạn nên tải một bản sao lưu mới của dữ liệu hiện tại trước khi tiếp tục.</Text>
+        <Alert
+          type="warning"
+          showIcon
+          message="Nên sao lưu dữ liệu hiện tại trước khi tiếp tục."
+        />
       </Modal>
     </Card>
   );
