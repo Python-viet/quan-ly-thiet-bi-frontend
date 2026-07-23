@@ -12,6 +12,7 @@ import {
   DatabaseOutlined,
 } from '@ant-design/icons';
 import useAuth from '../hooks/useAuth';
+import './MainLayout.css';
 
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -67,7 +68,7 @@ const MainLayout = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible>
+      <Sider collapsible breakpoint="lg" collapsedWidth="0" width={220}>
         <div style={{ padding: '16px 8px', textAlign: 'center' }}>
             <Title level={5} style={{ color: 'white', margin: 0, textTransform: 'uppercase' }}>
                 Hệ thống QLTB
@@ -79,7 +80,7 @@ const MainLayout = () => {
         <Menu theme="dark" selectedKeys={[location.pathname]} mode="inline" items={menuItems} />
       </Sider>
       <Layout>
-        <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <Header className="main-layout-header">
             <Space align="center">
              <Text>Xin chào, <strong>{user?.fullName || user?.username}</strong></Text>
             <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
@@ -87,8 +88,8 @@ const MainLayout = () => {
             </Button>
           </Space>
         </Header>
-        <Content style={{ margin: '16px' }}>
-          <div style={{ padding: 24, minHeight: 360, background: '#fff' }}>
+        <Content className="main-layout-content">
+          <div className="main-layout-content-inner">
             <Outlet />
           </div>
         </Content>
