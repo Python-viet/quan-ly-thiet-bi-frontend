@@ -3,24 +3,10 @@ import { Card, Row, Col, Select, Button, message, Statistic, Typography, Space }
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
 import apiClient from '../api/axiosConfig';
 import useAuth from '../hooks/useAuth';
+import { getCurrentSchoolYear, generateSchoolYears } from '../utils/schoolYear';
 
 const { Title } = Typography;
 const { Option } = Select;
-
-const getCurrentSchoolYear = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth() + 1;
-    const currentYear = today.getFullYear();
-    return currentMonth >= 8 ? `${currentYear}-${currentYear + 1}` : `${currentYear - 1}-${currentYear}`;
-};
-
-const generateSchoolYears = () => {
-    const years = [];
-    const [currentStart, currentEnd] = getCurrentSchoolYear().split('-').map(Number);
-    years.push(`${currentStart}-${currentEnd}`);
-    years.push(`${currentStart - 1}-${currentEnd - 1}`);
-    return years;
-};
 
 const schoolMonths = [
     { value: 9, label: 'Tháng 9' }, { value: 10, label: 'Tháng 10' },
