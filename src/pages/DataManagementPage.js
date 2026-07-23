@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, Button, Space, Typography, Popconfirm, message, Divider } from 'antd';
 import { DownloadOutlined, RedoOutlined } from '@ant-design/icons';
 import apiClient from '../api/axiosConfig';
+import RestoreDataCard from '../components/data-management/RestoreDataCard';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -51,6 +52,10 @@ const DataManagementPage = () => {
                         Thực hiện Sao lưu
                     </Button>
                 </div>
+
+                <Divider />
+
+                <RestoreDataCard />
 
                 <Divider />
 
